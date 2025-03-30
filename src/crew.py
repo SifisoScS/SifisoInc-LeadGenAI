@@ -11,11 +11,11 @@ search_tool = SerperDevTool()
 # Define Lead Researcher
 lead_researcher = Agent(
     role="Lead Research Specialist",
-    goal="Find and collect detailed business information for a given industry",
+    goal="Find potential business leads in a given industry",
     verbose=True,
-    memory=True,
+    memory=True,    
     backstory="A highly skilled researcher who gathers in-depth data on companies.",
-    tools=[search_tool]
+    llm_model="gpt-3.5-turbo"
 )
 
 # Define Data Cleaner Agent
