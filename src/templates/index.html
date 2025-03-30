@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LeadGen AI - Sifiso Inc.</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Sifiso Inc. LeadGen AI</h1>
+        <form method="POST">
+            <label>🔍 Enter Industry:</label>
+            <input type="text" name="industry" required>
+            <button type="submit">Find Leads</button>
+        </form>
+
+        {% if leads %}
+        <h2>📋 Generated Leads</h2>
+        <table>
+            <tr>
+                <th>Company Name</th>
+                <th>Website</th>
+                <th>Phone</th>
+                <th>Email</th>
+            </tr>
+            {% for lead in leads %}
+            <tr>
+                <td>{{ lead.company_name }}</td>
+                <td><a href="{{ lead.website }}" target="_blank">{{ lead.website }}</a></td>
+                <td>{{ lead.phone }}</td>
+                <td>{{ lead.email }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        {% endif %}
+    </div>
+</body>
+</html>
