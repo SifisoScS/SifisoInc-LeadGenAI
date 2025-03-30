@@ -1,10 +1,12 @@
 find_leads_task:
   description: "Search for businesses in {industry} using online sources and provide their website and contact details."
   expected_output: "A list of 5 companies with their website and contact details."
+
   
 compile_leads_task:
   description: "Format the gathered leads into a structured list."
   expected_output: "A structured lead list formatted as a CSV file."
+
 
 qualify_leads_task:
   description: >
