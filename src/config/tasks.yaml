@@ -5,3 +5,12 @@ find_leads_task:
 compile_leads_task:
   description: "Format the gathered leads into a structured list."
   expected_output: "A structured lead list formatted as a CSV file."
+
+qualify_leads_task:
+  description: >
+    Evaluate and rank the collected leads based on relevance to the given industry.
+    Consider factors like company size, location, industry keywords, and credibility.
+    Remove low-quality leads and only return the top 3 best matches.
+  expected_output: >
+    A structured list of the 3 most relevant leads with a short justification for why they were chosen.
+    Include a score for each lead based on the evaluation criteria.

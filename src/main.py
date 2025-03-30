@@ -1,27 +1,30 @@
+import os
+import csv
 from crew import leadgen_crew
+
+# Define output folder
+OUTPUT_FOLDER = "output"
+CSV_FILENAME = os.path.join(OUTPUT_FOLDER, "leadgen_results.csv")
+
+# Ensure the /output/ folder exists
+os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
 # Start the AI workflow
 if __name__ == "__main__":
-    print("🚀 Running Sifiso Inc. LeadGen AI...")
+    industry = input("🔍 Enter the industry for lead generation: ")
+    print("\n🚀 Running Sifiso Inc. LeadGen AI...\n")
     
-    # Get industry input from the user
-    industry = input("🔍 Enter the industry for lead generation: ").strip()
+    # Run the AI workflow
+    result = leadgen_crew.kickoff(inputs={"industry": industry})
 
-    # Ensure input is not empty
-    if not industry:
-        print("⚠️ Industry cannot be empty. Please enter a valid industry.")
-        exit(1)
+    # Save results to CSV
+    def save_leads_to_csv(leads):
+        with open(CSV_FILENAME, mode="w", newline="", encoding="utf-8") as file:
+            writer = csv.writer(file)
+            writer.writerow(["Company Name", "AI Score", "Reason for Score"])
+            for lead in leads:
+                writer.writerow([lead["company_name"], lead["ai_score"], lead["reason"]])
 
-    print(f"\n📢 Searching for leads in: {industry}...\n")
+        print("\n✅ AI Lead Scoring Complete! Results saved in:", CSV_FILENAME)
 
-    try:
-        # Run CrewAI workflow
-        result = leadgen_crew.kickoff(inputs={"industry": industry})
-        
-        # Print formatted output
-        print("\n✅ Lead Generation Complete! Here are the results:\n")
-        print(result)
-
-    except Exception as e:
-        print("\n❌ An error occurred while running the AI workflow.")
-        print(f"Error: {e}")
+    save_leads_to_csv(result)
