@@ -3,15 +3,10 @@ import csv
 from crewai import Agent, Task, Crew, Process
 from dotenv import load_dotenv
 from crewai_tools import SerperDevTool
-from openai import OpenAI  # Import OpenAI for GPT-powered analysis
 
 # Load API keys
 load_dotenv()
 search_tool = SerperDevTool()
-openai_api_key = os.getenv("OPENAI_API_KEY")
-
-# OpenAI client setup
-client = OpenAI(api_key=openai_api_key)
 
 # Define Lead Researcher
 lead_researcher = Agent(
@@ -23,13 +18,13 @@ lead_researcher = Agent(
     tools=[search_tool]
 )
 
-# Define Lead Qualification Agent
-lead_qualifier = Agent(
-    role="Lead Qualification AI",
-    goal="Analyze and rank business leads based on online reputation and relevance",
+# Define Data Cleaner Agent
+data_cleaner = Agent(
+    role="Lead Data Cleaner",
+    goal="Filter and clean the collected business leads",
     verbose=True,
     memory=True,
-    backstory="An AI agent that evaluates companies using GPT and assigns an AI score.",
+    backstory="An AI agent that removes duplicates, formats data, and ensures quality.",
 )
 
 # Research Task: Collect Detailed Lead Data
@@ -41,77 +36,39 @@ find_leads_task = Task(
         "- Phone\n"
         "- Email\n"
         "- Company Description\n"
-        "- Online Presence Score\n"
     ),
     expected_output="A list of 5 companies with detailed info.",
     tools=[search_tool],
     agent=lead_researcher,
 )
 
-# Lead Qualification Task: AI-Powered Scoring
-def ai_lead_scoring(lead_data):
+# Data Cleaning Task: Remove Duplicates & Validate Data
+def clean_lead_data(lead_list):
     """
-    Function to analyze and score leads using GPT.
+    Function to filter and clean lead data.
     """
-    prompt = f"""
-    You are an AI lead qualification expert. Analyze the following company information and rank the business lead from 0 to 100 based on:
-    - Industry relevance
-    - Online presence and reputation
-    - Website quality
-    - Social media engagement
+    unique_leads = {}
+    for lead in lead_list:
+        key = lead["company_name"].lower()  # Normalize company name
+        if key not in unique_leads:
+            unique_leads[key] = lead
 
-    Here is the company data:
-    {lead_data}
+    return list(unique_leads.values())
 
-    Provide output in this JSON format:
-    {{
-        "company_name": "Company XYZ",
-        "ai_score": 85,
-        "reason": "Strong online presence and good customer engagement"
-    }}
-    """
-
-    response = client.completions.create(
-        model="gpt-4",
-        messages=[{"role": "system", "content": prompt}],
-        max_tokens=150
-    )
-    
-    return response.choices[0].message["content"]
-
-# Task for AI Lead Scoring
-qualify_leads_task = Task(
+clean_leads_task = Task(
     description=(
-        "Analyze the collected leads and score them based on:\n"
-        "- Industry relevance\n"
-        "- Online presence\n"
-        "- Website quality\n"
-        "- Social media activity\n\n"
-        "Provide a sorted list with scores (0-100)."
+        "Review and clean the collected leads:\n"
+        "- Remove duplicate entries\n"
+        "- Validate contact details\n"
+        "- Format data properly"
     ),
-    expected_output="A ranked list of leads with AI scores.",
-    agent=lead_qualifier,
+    expected_output="A cleaned list of unique, valid business leads.",
+    agent=data_cleaner,
 )
 
 # Create Crew
 leadgen_crew = Crew(
-    agents=[lead_researcher, lead_qualifier],
-    tasks=[find_leads_task, qualify_leads_task],
+    agents=[lead_researcher, data_cleaner],
+    tasks=[find_leads_task, clean_leads_task],
     process=Process.sequential
 )
-
-# Run AI workflow
-if __name__ == "__main__":
-    industry = input("🔍 Enter the industry for lead generation: ")
-    print("\n🚀 Running Sifiso Inc. LeadGen AI...\n")
-    result = leadgen_crew.kickoff(inputs={"industry": industry})
-
-    # Save results to CSV
-    csv_filename = "leadgen_results.csv"
-    with open(csv_filename, mode="w", newline="", encoding="utf-8") as file:
-        writer = csv.writer(file)
-        writer.writerow(["Company Name", "AI Score", "Reason for Score"])
-        for lead in result:
-            writer.writerow([lead["company_name"], lead["ai_score"], lead["reason"]])
-
-    print("\n✅ AI Lead Scoring Complete! Results saved in:", csv_filename)
