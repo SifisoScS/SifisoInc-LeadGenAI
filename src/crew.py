@@ -1,74 +1,50 @@
 import os
-import csv
 from crewai import Agent, Task, Crew, Process
 from dotenv import load_dotenv
 from crewai_tools import SerperDevTool
+from tools.scraper import search_leads  # ✅ Correct if running from src/tools/scraper.py
 
 # Load API keys
 load_dotenv()
 search_tool = SerperDevTool()
 
-# Define Lead Researcher
+# Define Agents
 lead_researcher = Agent(
     role="Lead Research Specialist",
     goal="Find potential business leads in a given industry",
     verbose=True,
-    memory=True,    
-    backstory="A highly skilled researcher who gathers in-depth data on companies.",
-    llm_model="gpt-3.5-turbo"
+    memory=True,
+    backstory="A highly skilled researcher who specializes in finding companies that match the given criteria.",
+    tools=[search_tool]
 )
 
-# Define Data Cleaner Agent
-data_cleaner = Agent(
-    role="Lead Data Cleaner",
-    goal="Filter and clean the collected business leads",
+data_collector = Agent(
+    role="Lead Data Collector",
+    goal="Extract and structure lead data",
     verbose=True,
     memory=True,
-    backstory="An AI agent that removes duplicates, formats data, and ensures quality.",
+    backstory="An AI agent responsible for compiling contact details into an organized lead list.",
+    tools=[search_tool]
 )
 
-# Research Task: Collect Detailed Lead Data
+# Define Tasks
 find_leads_task = Task(
-    description=(
-        "Search for businesses in {industry} and collect their information:\n"
-        "- Company Name\n"
-        "- Website\n"
-        "- Phone\n"
-        "- Email\n"
-        "- Company Description\n"
-    ),
-    expected_output="A list of 5 companies with detailed info.",
+    description="Search for businesses in {industry} using online sources and provide their website and contact details.",
+    expected_output="A list of 5 companies with their website and contact details.",
     tools=[search_tool],
     agent=lead_researcher,
 )
 
-# Data Cleaning Task: Remove Duplicates & Validate Data
-def clean_lead_data(lead_list):
-    """
-    Function to filter and clean lead data.
-    """
-    unique_leads = {}
-    for lead in lead_list:
-        key = lead["company_name"].lower()  # Normalize company name
-        if key not in unique_leads:
-            unique_leads[key] = lead
-
-    return list(unique_leads.values())
-
-clean_leads_task = Task(
-    description=(
-        "Review and clean the collected leads:\n"
-        "- Remove duplicate entries\n"
-        "- Validate contact details\n"
-        "- Format data properly"
-    ),
-    expected_output="A cleaned list of unique, valid business leads.",
-    agent=data_cleaner,
+compile_leads_task = Task(
+    description="Format the gathered leads into a structured list and save them to a CSV file.",
+    expected_output="A structured lead list saved as a CSV file.",
+    agent=data_collector,
+    function=search_leads  # This is where we use our new scraper function
 )
 
 # Create Crew
 leadgen_crew = Crew(
-    agents=[lead_researcher, data_cleaner],
-    tasks=[find_leads_task, clean_leads_task],
+    agents=[lead_researcher, data_collector],
+    tasks=[find_leads_task, compile_leads_task],
     process=Process.sequential
 )

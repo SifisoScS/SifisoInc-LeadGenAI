@@ -60,7 +60,7 @@ if __name__ == "__main__":
     result = leadgen_crew.kickoff(inputs={"industry": industry})
 
     # Save scored leads to CSV
-    save_leads_to_csv(result)import os
+    save_leads_to_csv(result)
 import csv
 from crew import leadgen_crew
 
